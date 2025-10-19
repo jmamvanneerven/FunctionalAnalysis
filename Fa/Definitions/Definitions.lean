@@ -37,14 +37,48 @@ class InnerProductSpace [NormedAddCommGroup V] extends VectorSpace 𝕂 V, Inner
   add_left (u v w : V) : inner (u + v) w = inner u w + inner v w
   add_right (u v w : V) : inner u (v + w) = inner u v + inner u w
   scalar_mul_left (u v : V) (k : 𝕂) : inner (k • u) v = k * inner u v
-  scalar_mul_right (u v : V) (k : 𝕂) : inner u (k • u) = (starRingEnd 𝕂) k * inner u v
+  scalar_mul_right (u v : V) (k : 𝕂) : inner u (k • v) = (starRingEnd 𝕂) k * inner u v
   nonneg (v : V) : RCLike.re (inner v v) ≥ 0 ∧ (starRingEnd 𝕂) (inner v v) = inner v v
   definite (v : V) : inner v v = 0 ↔ v = 0
+  conj_inner_symm (u v : V) : starRingEnd 𝕂 (inner u v) = inner v u
   norm_sq_eq_re_inner (v : V) : ‖v‖ ^ 2 = RCLike.re (inner v v)
 
-def innerProductSpace_equiv [h : NormedAddCommGroup V] : InnerProductSpace 𝕂 V ≃ _root_.InnerProductSpace 𝕂 V := by
-  -- Isomorphism requires swapping the order in inner product
-  sorry
+lemma norm_smul_le [NormedAddCommGroup V] [ips : InnerProductSpace 𝕂 V] :
+   ∀ (a : 𝕂) (b : V), ‖a • b‖ ≤ ‖a‖ * ‖b‖ := by
+  intro a b
+  rw [← sq_le_sq₀ (norm_nonneg _) (mul_nonneg (norm_nonneg _) (norm_nonneg _))]
+  rw [mul_pow, ips.norm_sq_eq_re_inner]
+  rw [ips.norm_sq_eq_re_inner]
+  rw [ips.scalar_mul_right, ips.scalar_mul_left]
+  rw [@RCLike.norm_sq_eq_def_ax]
+  simp
+  ring_nf
+  rfl
+
+def innerProductSpace_equiv [h : NormedAddCommGroup V] : InnerProductSpace 𝕂 V ≃ _root_.InnerProductSpace 𝕂 V where
+  toFun ips' := {
+    toInner := {
+      inner x y:= ips'.inner y x
+    },
+    norm_smul_le:= norm_smul_le _ _
+    norm_sq_eq_re_inner := ips'.norm_sq_eq_re_inner
+    conj_inner_symm := by simp [ips'.conj_inner_symm]
+    add_left := by simp [ips'.add_right]
+    smul_left := by simp [ips'.scalar_mul_right]
+  }
+  invFun ips := {
+    toInner := {
+      inner x y:= ips.inner y x
+    },
+    add_left := by simp [inner_add_right]
+    add_right := by simp [inner_add_left]
+    scalar_mul_left := by simp [inner_smul_right]
+    scalar_mul_right := by simp [inner_smul_left]
+    nonneg := by simp [inner_self_nonneg]
+    definite := by simp
+    norm_sq_eq_re_inner := by simp [inner_self_eq_norm_sq]
+    conj_inner_symm := by simp
+  }
 
 structure IsLinearMap' {V : Type _} [AddCommGroup V] {W : Type _} [AddCommGroup W] [VectorSpace 𝕂 V]
     [VectorSpace 𝕂 W] (f : V → W) : Prop where
