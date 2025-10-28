@@ -7,10 +7,9 @@ namespace Fa
 abbrev VectorSpace [AddCommGroup V] := Module 𝕂 V
 
 
+-- Definiteness and triangle inequality are obtained through NormedAddCommGroup
 class NormedSpace [NormedAddCommGroup V] extends VectorSpace 𝕂 V where
-  zero_iff (v : V) : ‖v‖ = 0 ↔ v = 0
   scalar_hom (k : 𝕂) (v : V) : ‖k • v‖ = ‖k‖ * ‖v‖
-  triangle_ineq (v w : V) : ‖v + w‖ ≤ ‖v‖ + ‖w‖
 
 
 def normedSpace_equiv [h : NormedAddCommGroup V] : NormedSpace 𝕂 V ≃ _root_.NormedSpace 𝕂 V where
@@ -22,9 +21,7 @@ def normedSpace_equiv [h : NormedAddCommGroup V] : NormedSpace 𝕂 V ≃ _root_
     norm_smul_le a b := le_of_eq (ns'.scalar_hom a b)
   }
   invFun ns := {
-    zero_iff _ := norm_eq_zero
     scalar_hom := norm_smul
-    triangle_ineq := norm_add_le
   }
 
 instance [h : NormedAddCommGroup V] [h : NormedSpace 𝕂 V] : _root_.NormedSpace 𝕂 V :=
