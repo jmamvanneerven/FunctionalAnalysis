@@ -4,7 +4,7 @@ variable (𝕂 : Type _) (V : Type _) [RCLike 𝕂]
 
 namespace Fa
 
-class VectorSpace [AddCommGroup V] extends Module 𝕂 V
+abbrev VectorSpace [AddCommGroup V] := Module 𝕂 V
 
 
 class NormedSpace [NormedAddCommGroup V] extends VectorSpace 𝕂 V where
@@ -80,12 +80,23 @@ def innerProductSpace_equiv [h : NormedAddCommGroup V] : InnerProductSpace 𝕂 
     conj_inner_symm := by simp
   }
 
-structure IsLinearMap' {V : Type _} [AddCommGroup V] {W : Type _} [AddCommGroup W] [VectorSpace 𝕂 V]
+structure IsLinearMap {V : Type _} [AddCommGroup V] {W : Type _} [AddCommGroup W] [VectorSpace 𝕂 V]
     [VectorSpace 𝕂 W] (f : V → W) : Prop where
   add (v w : V) : f (v + w) = f v + f w
-  mul (v : V) (k : 𝕂) : f (k • v) = k • f v
+  mul (k : 𝕂) (v : V) : f (k • v) = k • f v
 
+def isLinearMap_iff {V : Type _} [AddCommGroup V] {W : Type _} [AddCommGroup W] [VectorSpace 𝕂 V]
+    [VectorSpace 𝕂 W] (f : V → W) : IsLinearMap 𝕂 f ↔ _root_.IsLinearMap 𝕂 f := by
+  refine ⟨fun h ↦ ⟨h.add, h.mul⟩, fun h ↦ ?_⟩
+  exact ⟨h.map_add, h.map_smul⟩
 
-structure IsBoundedLinearMap' [NormedAddCommGroup V] [NormedSpace 𝕂 V]
-  {W : Type _} [NormedAddCommGroup W] [NormedSpace 𝕂 W] (f : V → W) : Prop extends IsLinearMap' 𝕂 f where
+structure IsBoundedLinearMap {V : Type _} [NormedAddCommGroup V] [NormedSpace 𝕂 V]
+    {W : Type _} [NormedAddCommGroup W] [NormedSpace 𝕂 W]
+    (f : V → W) : Prop extends IsLinearMap 𝕂 f where
   bound : ∃ M, 0 < M ∧ ∀ x : V, ‖f x‖ ≤ M * ‖x‖
+
+def isBoundedLinearMap_iff [NormedAddCommGroup V] [NormedSpace 𝕂 V]
+    {W : Type _} [NormedAddCommGroup W] [NormedSpace 𝕂 W] (f : V → W) :
+  IsBoundedLinearMap 𝕂 f ↔ _root_.IsBoundedLinearMap 𝕂 f := by
+  exact ⟨fun h ↦ ⟨(isLinearMap_iff _ _).mp h.toIsLinearMap, h.bound⟩,
+    fun h ↦ ⟨(isLinearMap_iff _ _ ).mpr h.toIsLinearMap, h.bound⟩⟩
