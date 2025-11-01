@@ -1,9 +1,11 @@
 import Mathlib.Analysis.RCLike.Basic
 import Mathlib.Analysis.Normed.Module.Basic
+import Mathlib.LinearAlgebra.Dimension.Finite
 import Mathlib.LinearAlgebra.FiniteDimensional.Defs
+
 import Mathlib.Data.Real.Basic
 
-variable {𝕂 : Type _} {V : Type _} [RCLike 𝕂] [NormedAddCommGroup V] [NormedSpace 𝕂 V]
+variable {𝕂 : Type _} {V : Type _} [RCLike 𝕂] [nacg : NormedAddCommGroup V] [ns : NormedSpace 𝕂 V]
 
 open Module
 
@@ -50,20 +52,51 @@ theorem norm_equiv_equivalence : Equivalence (norm_equiv (V := V)) := by
   · intro n₁ n₂ n₃ h₁ h₂; exact norm_equiv_trans (V := V) h₁ h₂
 
 
+structure Fa.Norm (𝕂 : Type _) (V : Type _) [RCLike 𝕂] where
+  nacg : NormedAddCommGroup V
+  ns : @NormedSpace 𝕂 V _ nacg.toSeminormedAddCommGroup
+
+def Fa.Norm.norm (n : Fa.Norm 𝕂 V) : V → ℝ := n.nacg.norm
+
+theorem norm_equiv_of_subsingleton [h : Subsingleton V]
+  (norm1 : V → ℝ)
+  (norm2 : V → ℝ)
+  (h1 : norm1 0 = 0)
+  (h2 : norm2 0 = 0) :
+  norm_equiv norm1 norm2 := by
+  use 1, by linarith
+  use 1, by linarith
+  intro x
+  simp [Subsingleton.elim x 0, h1, h2]
+
 /-- Theorem 1.34
  Two norms on a finite-dimensional vector space are equivalent
  This definition looks a bit wonky, because norms are typeclasses,
  so we take NormedAddCommGroup as parameters and construct the NormedSpace using that.
 -/
 theorem norm_equiv_of_finite_dimensional
-  [FiniteDimensional 𝕂 V]
-  (n1 : NormedAddCommGroup V)
-  (n2 : NormedAddCommGroup V)
-  (s1 : @NormedSpace 𝕂 V _ n1.toSeminormedAddCommGroup)
-  (s2 : @NormedSpace 𝕂 V _ n2.toSeminormedAddCommGroup) :
-  norm_equiv n1.norm n2.norm := by
+  [h : FiniteDimensional 𝕂 V]
+  (norm1 : Fa.Norm 𝕂 V)
+  (norm2 : Fa.Norm 𝕂 V) :
+  norm_equiv norm1.norm norm2.norm := by
+  by_cases hdim : Module.rank 𝕂 V = 0
+  · rw [rank_zero_iff] at hdim
+    exact norm_equiv_of_subsingleton (V := V) norm1.nacg.norm norm2.nacg.norm (by
+      sorry) (by sorry)
   -- Obtain a basis for V
   let ι := Basis.ofVectorSpaceIndex 𝕂 V
   let basis : Basis ι 𝕂 V := Basis.ofVectorSpace 𝕂 V
+  -- Define the Euclidean norm associated to this basis
+  let euclidean_norm (v : V) : ℝ :=
+    Real.sqrt (∑ i, ‖basis.coord i v‖ ^ 2)
+
+
+  suffices ∀ (norm : Fa.Norm 𝕂 V), norm_equiv norm.norm euclidean_norm by
+    exact norm_equiv_trans (this norm1) (norm_equiv_symm (this norm2))
+
+  intro norm
+  -- Let M := max1⩽ j⩽d ∥x j∥.
+  let M : ℝ := ((Finset.univ : Finset ι).image (fun i ↦ ‖basis i‖)).max' (by sorry)
+
 
   sorry
