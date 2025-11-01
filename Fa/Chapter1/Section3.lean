@@ -1,12 +1,14 @@
 import Mathlib.Analysis.RCLike.Basic
 import Mathlib.Analysis.Normed.Module.Basic
 import Mathlib.LinearAlgebra.FiniteDimensional.Defs
+import Mathlib.Data.Real.Basic
 
 variable {𝕂 : Type _} {V : Type _} [RCLike 𝕂] [NormedAddCommGroup V] [NormedSpace 𝕂 V]
 
 open Module
 
-/-- Definition 1.32 -/
+/-- Definition 1.32: two norms (as functions) are equivalent
+if they bound each other up to positive constants. -/
 def norm_equiv (norm1 : V → ℝ) (norm2 : V → ℝ) : Prop :=
   ∃ c > 0, ∃ C ≥ c, ∀ x : V, c * norm1 x ≤ norm2 x ∧ norm2 x ≤ C * norm1 x
 
@@ -40,6 +42,13 @@ theorem norm_equiv_trans {n1 n2 n3 : V → ℝ}
     grind [mul_assoc, mul_comm, mul_le_mul_iff_right₀]
   · refine le_trans hnorms2.right ?_
     grind [mul_assoc, mul_comm, mul_le_mul_iff_right₀]
+
+
+theorem norm_equiv_equivalence : Equivalence (norm_equiv (V := V)) := by
+  refine ⟨norm_equiv_refl (V := V), ?symm, ?trans⟩
+  · intro n₁ n₂ h; exact norm_equiv_symm (V := V) h
+  · intro n₁ n₂ n₃ h₁ h₂; exact norm_equiv_trans (V := V) h₁ h₂
+
 
 /-- Theorem 1.34
  Two norms on a finite-dimensional vector space are equivalent
