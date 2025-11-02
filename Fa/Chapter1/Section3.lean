@@ -1,5 +1,6 @@
 import Mathlib.Analysis.RCLike.Basic
 import Mathlib.Analysis.Normed.Module.Basic
+import Mathlib.Analysis.Seminorm
 import Mathlib.LinearAlgebra.Dimension.Finite
 import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 
@@ -69,34 +70,49 @@ theorem norm_equiv_of_subsingleton [h : Subsingleton V]
   intro x
   simp [Subsingleton.elim x 0, h1, h2]
 
+theorem Seminorm.sum_le {ι : Type _} [Fintype ι] (n : Seminorm 𝕂 V) (f : ι → V) : n (∑ i : ι, f i) ≤ ∑ i : ι, n (f i) := by
+  
+  sorry
+
 /-- Theorem 1.34
  Two norms on a finite-dimensional vector space are equivalent
- This definition looks a bit wonky, because norms are typeclasses,
- so we take NormedAddCommGroup as parameters and construct the NormedSpace using that.
 -/
 theorem norm_equiv_of_finite_dimensional
   [h : FiniteDimensional 𝕂 V]
-  (norm1 : Fa.Norm 𝕂 V)
-  (norm2 : Fa.Norm 𝕂 V) :
-  norm_equiv norm1.norm norm2.norm := by
-  by_cases hdim : Module.rank 𝕂 V = 0
-  · rw [rank_zero_iff] at hdim
-    exact norm_equiv_of_subsingleton (V := V) norm1.nacg.norm norm2.nacg.norm (by
-      sorry) (by sorry)
-  -- Obtain a basis for V
+  (n1 : Seminorm 𝕂 V) (n2 : Seminorm 𝕂 V) :
+  norm_equiv n1 n2 := by
+  -- We define the euclidean norm
   let ι := Basis.ofVectorSpaceIndex 𝕂 V
   let basis : Basis ι 𝕂 V := Basis.ofVectorSpace 𝕂 V
-  -- Define the Euclidean norm associated to this basis
   let euclidean_norm (v : V) : ℝ :=
     Real.sqrt (∑ i, ‖basis.coord i v‖ ^ 2)
 
+  -- Because norm equivalence is an equivalence, it suffices to show all norms are equivalent
+  -- to the euclidean norm.
+  suffices ∀ (n : Seminorm 𝕂 V), norm_equiv n euclidean_norm by
+    exact norm_equiv_trans (this n1) (norm_equiv_symm (this n2))
+  intro n
+  by_cases hdim : Module.rank 𝕂 V = 0
+  · rw [rank_zero_iff] at hdim
+    exact norm_equiv_of_subsingleton n (euclidean_norm) (map_zero n) (by simp [euclidean_norm])
 
-  suffices ∀ (norm : Fa.Norm 𝕂 V), norm_equiv norm.norm euclidean_norm by
-    exact norm_equiv_trans (this norm1) (norm_equiv_symm (this norm2))
-
-  intro norm
   -- Let M := max1⩽ j⩽d ∥x j∥.
-  let M : ℝ := ((Finset.univ : Finset ι).image (fun i ↦ ‖basis i‖)).max' (by sorry)
+  let M : ℝ := ((Finset.univ : Finset ι).image (fun i ↦ ‖basis i‖)).max' (by
+    refine Finset.image_nonempty.mpr ?_
 
+    sorry)
+  apply norm_equiv_symm
+  let m : ℝ := sorry
 
-  sorry
+  use m, sorry, M, sorry
+  intro x
+  let c := basis.repr x
+
+  constructor
+  · sorry
+  · have :
+      n x ≤ ∑ i, ‖c i‖ * n (basis i) := by
+        rw [← basis.sum_repr x]
+
+        sorry
+    sorry
