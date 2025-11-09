@@ -3,8 +3,9 @@ import Mathlib.Analysis.Normed.Module.Basic
 import Mathlib.Analysis.Seminorm
 import Mathlib.LinearAlgebra.Dimension.Finite
 import Mathlib.LinearAlgebra.FiniteDimensional.Defs
-
+import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
 import Mathlib.Data.Real.Basic
+import Fa.ForMathlib.Analysis.Seminorm
 
 variable {𝕂 : Type _} {V : Type _} [RCLike 𝕂] [nacg : NormedAddCommGroup V] [ns : NormedSpace 𝕂 V]
 
@@ -70,9 +71,6 @@ theorem norm_equiv_of_subsingleton [h : Subsingleton V]
   intro x
   simp [Subsingleton.elim x 0, h1, h2]
 
-theorem Seminorm.sum_le {ι : Type _} [Fintype ι] (n : Seminorm 𝕂 V) (f : ι → V) : n (∑ i : ι, f i) ≤ ∑ i : ι, n (f i) := by
-  
-  sorry
 
 /-- Theorem 1.34
  Two norms on a finite-dimensional vector space are equivalent
@@ -96,11 +94,12 @@ theorem norm_equiv_of_finite_dimensional
   · rw [rank_zero_iff] at hdim
     exact norm_equiv_of_subsingleton n (euclidean_norm) (map_zero n) (by simp [euclidean_norm])
 
-  -- Let M := max1⩽ j⩽d ∥x j∥.
+  -- Let M := max 1⩽j⩽d ∥x j∥.
   let M : ℝ := ((Finset.univ : Finset ι).image (fun i ↦ ‖basis i‖)).max' (by
-    refine Finset.image_nonempty.mpr ?_
-
-    sorry)
+    classical
+    apply Finset.image_nonempty.mpr
+    rw [← Finset.card_ne_zero, Finset.card_univ]
+    simpa [← Basis.mk_eq_rank'' basis] using hdim)
   apply norm_equiv_symm
   let m : ℝ := sorry
 
