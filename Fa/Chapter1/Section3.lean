@@ -6,8 +6,9 @@ import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
 import Mathlib.Data.Real.Basic
 import Fa.ForMathlib.Analysis.Seminorm
+import Fa.Definitions.Definitions
 
-variable {𝕂 : Type _} {V : Type _} [RCLike 𝕂] [nacg : NormedAddCommGroup V] [ns : NormedSpace 𝕂 V]
+variable {𝕂 : Type _} {V : Type _}
 
 open Module
 
@@ -54,12 +55,14 @@ theorem norm_equiv_equivalence : Equivalence (norm_equiv (V := V)) := by
   · intro n₁ n₂ n₃ h₁ h₂; exact norm_equiv_trans (V := V) h₁ h₂
 
 
-structure Fa.Norm (𝕂 : Type _) (V : Type _) [RCLike 𝕂] where
-  nacg : NormedAddCommGroup V
-  ns : @NormedSpace 𝕂 V _ nacg.toSeminormedAddCommGroup
+-- structure Fa.Norm (𝕂 : Type _) (V : Type _) [RCLike 𝕂] where
+--   nacg : NormedAddCommGroup V
+--   ns : @NormedSpace 𝕂 V _ nacg.toSeminormedAddCommGroup
 
-def Fa.Norm.norm (n : Fa.Norm 𝕂 V) : V → ℝ := n.nacg.norm
+-- def Fa.Norm.norm (n : Fa.Norm 𝕂 V) : V → ℝ := n.nacg.norm
 
+variable [RCLike 𝕂]
+variable [nacg : NormedAddCommGroup V] [ns : NormedSpace 𝕂 V]
 theorem norm_equiv_of_subsingleton [h : Subsingleton V]
   (norm1 : V → ℝ)
   (norm2 : V → ℝ)
@@ -72,35 +75,30 @@ theorem norm_equiv_of_subsingleton [h : Subsingleton V]
   simp [Subsingleton.elim x 0, h1, h2]
 
 
-/-- Theorem 1.34
- Two norms on a finite-dimensional vector space are equivalent
--/
-theorem norm_equiv_of_finite_dimensional
-  [h : FiniteDimensional 𝕂 V]
-  (n1 : Seminorm 𝕂 V) (n2 : Seminorm 𝕂 V) :
-  norm_equiv n1 n2 := by
-  -- We define the euclidean norm
-  let ι := Basis.ofVectorSpaceIndex 𝕂 V
-  let basis : Basis ι 𝕂 V := Basis.ofVectorSpace 𝕂 V
-  let euclidean_norm (v : V) : ℝ :=
-    Real.sqrt (∑ i, ‖basis.coord i v‖ ^ 2)
+noncomputable def euclidean_norm {ι : Type _} [Fintype ι] (b : Basis ι 𝕂 V) (v : V) : ℝ :=
+    Real.sqrt (∑ i, ‖b.coord i v‖ ^ 2)
 
-  -- Because norm equivalence is an equivalence, it suffices to show all norms are equivalent
-  -- to the euclidean norm.
-  suffices ∀ (n : Seminorm 𝕂 V), norm_equiv n euclidean_norm by
-    exact norm_equiv_trans (this n1) (norm_equiv_symm (this n2))
-  intro n
+theorem norm_equiv_euclidean_of_finite_dimensional
+  {ι : Type _}
+  [Fintype ι]
+  [FiniteDimensional 𝕂 V]
+  (basis : Basis ι 𝕂 V)
+  (n : Fa.Norm 𝕂 V)
+  : norm_equiv n (euclidean_norm basis) := by
+
   by_cases hdim : Module.rank 𝕂 V = 0
   · rw [rank_zero_iff] at hdim
-    exact norm_equiv_of_subsingleton n (euclidean_norm) (map_zero n) (by simp [euclidean_norm])
+    exact norm_equiv_of_subsingleton n (euclidean_norm basis) (n.toSeminorm.map_zero')
+      (by simp [euclidean_norm])
 
   -- Let M := max 1⩽j⩽d ∥x j∥.
   let M : ℝ := ((Finset.univ : Finset ι).image (fun i ↦ ‖basis i‖)).max' (by
-    classical
     apply Finset.image_nonempty.mpr
     rw [← Finset.card_ne_zero, Finset.card_univ]
-    simpa [← Basis.mk_eq_rank'' basis] using hdim)
+    simpa [rank_eq_card_basis basis] using hdim
+    )
   apply norm_equiv_symm
+
   let m : ℝ := sorry
 
   use m, sorry, M, sorry
@@ -115,3 +113,18 @@ theorem norm_equiv_of_finite_dimensional
 
         sorry
     sorry
+
+
+/-- Theorem 1.34
+ Two norms on a finite-dimensional vector space are equivalent
+-/
+theorem norm_equiv_of_finite_dimensional
+  [h : FiniteDimensional 𝕂 V]
+  (n1 : Fa.Norm 𝕂 V) (n2 : Fa.Norm 𝕂 V) :
+  norm_equiv n1 n2 := by
+  -- We define the euclidean norm
+  let ι := Basis.ofVectorSpaceIndex 𝕂 V
+  let basis : Basis ι 𝕂 V := Basis.ofVectorSpace 𝕂 V
+  suffices ∀ (n : Fa.Norm 𝕂 V), norm_equiv n (euclidean_norm basis) by
+    exact norm_equiv_trans (this n1) (norm_equiv_symm (this n2))
+  apply norm_equiv_euclidean_of_finite_dimensional

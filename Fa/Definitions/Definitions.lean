@@ -6,6 +6,15 @@ namespace Fa
 
 abbrev VectorSpace [AddCommGroup V] := Module 𝕂 V
 
+structure Norm [NormedAddCommGroup V] [NormedSpace 𝕂 V] : Type extends Seminorm 𝕂 V where
+  zero_imp (x : V) : toFun x = 0 → x = 0
+
+instance instFunLike [NormedAddCommGroup V] [NormedSpace 𝕂 V] : FunLike (Norm 𝕂 V) V ℝ where
+  coe f := f.toFun
+  coe_injective' f g h := by
+    rcases f with ⟨⟨⟨_⟩⟩⟩
+    rcases g with ⟨⟨⟨_⟩⟩⟩
+    congr
 
 -- Definiteness and triangle inequality are obtained through NormedAddCommGroup
 class NormedSpace [NormedAddCommGroup V] extends VectorSpace 𝕂 V where
