@@ -92,7 +92,7 @@ theorem norm_equiv_euclidean_of_finite_dimensional
       (by simp [euclidean_norm])
 
   -- Let M := max 1⩽j⩽d ∥x j∥.
-  let M : ℝ := ((Finset.univ : Finset ι).image (fun i ↦ ‖basis i‖)).max' (by
+  let M : ℝ := ((Finset.univ : Finset ι).image (fun i ↦ n (basis i))).max' (by
     apply Finset.image_nonempty.mpr
     rw [← Finset.card_ne_zero, Finset.card_univ]
     simpa [rank_eq_card_basis basis] using hdim
@@ -107,12 +107,28 @@ theorem norm_equiv_euclidean_of_finite_dimensional
 
   constructor
   · sorry
-  · have :
+  · calc
       n x ≤ ∑ i, ‖c i‖ * n (basis i) := by
         rw [← basis.sum_repr x]
+        apply le_trans (n.sum_le _)
+        rw [show n.toSeminorm = n.toSeminorm.toFun from rfl]
+        conv =>
+          lhs; enter [2, i]; rw [n.toSeminorm.smul']
+        rfl
+      _ ≤ M * ∑ i, ‖c i‖ := by
+        rw [Finset.mul_sum]
+        apply Finset.sum_le_sum
+        intro i _
+        have hnM : n (basis i) ≤ M := by
+          exact (Finset.le_max' _ (n (basis i))
+            (by rw [@mem_image_univ_iff_mem_range]; use i))
+
+        have : 0 ≤ ‖c i‖ := by exact norm_nonneg (c i)
+        rw [mul_comm]
+        apply mul_le_mul hnM (by rfl) (norm_nonneg _)
 
         sorry
-    sorry
+      _ = _ := by sorry
 
 
 /-- Theorem 1.34
