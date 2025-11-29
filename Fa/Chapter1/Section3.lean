@@ -90,20 +90,31 @@ theorem norm_equiv_euclidean_of_finite_dimensional
   · rw [rank_zero_iff] at hdim
     exact norm_equiv_of_subsingleton n (euclidean_norm basis) (n.toSeminorm.map_zero')
       (by simp [euclidean_norm])
-
   -- Let M := max 1⩽j⩽d ∥x j∥.
   let M : ℝ := ((Finset.univ : Finset ι).image (fun i ↦ n (basis i))).max' (by
     apply Finset.image_nonempty.mpr
     rw [← Finset.card_ne_zero, Finset.card_univ]
     simpa [rank_eq_card_basis basis] using hdim
     )
+  have hM0 : 0 ≤ M := by
+    subst M
+    refine le_trans ?_ (Finset.min'_le_max' _ _)
+    apply Finset.le_min'
+    intro y hy
+    simp only [Finset.mem_image, Finset.mem_univ, true_and] at hy
+    obtain ⟨a, rfl⟩ := hy
+    apply apply_nonneg n.toSeminorm
   apply norm_equiv_symm
 
   let m : ℝ := sorry
 
-  use m, sorry, M, sorry
+  use m, sorry, M*√(Fintype.card ι), sorry
   intro x
   let c := basis.repr x
+
+  have h0cs : 0 ≤ ∑ i, ‖c i‖ := by
+    apply Fintype.sum_nonneg
+    exact Pi.le_def.mpr (fun i ↦ by simp)
 
   constructor
   · sorry
@@ -126,10 +137,18 @@ theorem norm_equiv_euclidean_of_finite_dimensional
         have : 0 ≤ ‖c i‖ := by exact norm_nonneg (c i)
         rw [mul_comm]
         apply mul_le_mul hnM (by rfl) (norm_nonneg _)
-
-        sorry
-      _ = _ := by sorry
-
+        exact le_trans (apply_nonneg n.toSeminorm (basis i)) hnM
+      _ ≤ M * √(Fintype.card ι) * √ (∑ i, ‖c i‖^2) := by
+        rw [mul_assoc, ← Real.sqrt_mul (Nat.cast_nonneg' _)]
+        refine mul_le_mul (by rfl) ?_ h0cs hM0
+        have := @sq_sum_le_card_mul_sum_sq ι _ _ _ _ _ (Finset.univ) (fun i => ‖c i‖)
+        rw [← Real.le_sqrt h0cs (by
+          apply mul_nonneg (Nat.cast_nonneg' _)
+          apply Fintype.sum_nonneg
+          exact Pi.le_def.mpr (fun i ↦ by simp))] at this
+        simpa using this
+      _ = M * √(Fintype.card ι) * euclidean_norm basis x := by
+        congr
 
 /-- Theorem 1.34
  Two norms on a finite-dimensional vector space are equivalent
