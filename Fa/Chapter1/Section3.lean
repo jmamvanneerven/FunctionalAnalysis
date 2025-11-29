@@ -17,7 +17,6 @@ if they bound each other up to positive constants. -/
 def norm_equiv (norm1 : V → ℝ) (norm2 : V → ℝ) : Prop :=
   ∃ c > 0, ∃ C ≥ c, ∀ x : V, c * norm1 x ≤ norm2 x ∧ norm2 x ≤ C * norm1 x
 
-
 theorem norm_equiv_refl (n : V → ℝ) : norm_equiv n n := by
   exact ⟨1, by linarith, 1, by linarith, fun x => ⟨by linarith, by linarith⟩⟩
 
@@ -78,6 +77,29 @@ theorem norm_equiv_of_subsingleton [h : Subsingleton V]
 noncomputable def euclidean_norm {ι : Type _} [Fintype ι] (b : Basis ι 𝕂 V) (v : V) : ℝ :=
     Real.sqrt (∑ i, ‖b.coord i v‖ ^ 2)
 
+noncomputable def EuclideanSeminormedAddCommGroup {ι : Type _} [Fintype ι] (b : Basis ι 𝕂 V) :
+  SeminormedAddCommGroup V where
+  toNorm := ⟨euclidean_norm b⟩
+  toPseudoMetricSpace := {
+    toDist := ⟨fun x y ↦ euclidean_norm b (x - y)⟩
+    dist_self := by
+      simp [euclidean_norm]
+      have : ∀ i : ι, (b.repr 0) i = 0 := by
+        exact (Basis.forall_coord_eq_zero_iff _).mpr (by rfl)
+      conv =>
+        lhs; enter [1, 2, x]; rw [this x]
+      simp
+    dist_comm x y := by
+      simp [euclidean_norm]
+      have : b.repr (x - y) = - b.repr (y - x) := by
+        
+        sorry
+
+      sorry
+    dist_triangle := sorry
+  }
+  dist_eq := by simp
+
 theorem norm_equiv_euclidean_of_finite_dimensional
   {ι : Type _}
   [Fintype ι]
@@ -108,7 +130,7 @@ theorem norm_equiv_euclidean_of_finite_dimensional
 
   let m : ℝ := sorry
 
-  use m, sorry, M*√(Fintype.card ι), sorry
+  use m, (by sorry), M*√(Fintype.card ι), (by sorry)
   intro x
   let c := basis.repr x
 
