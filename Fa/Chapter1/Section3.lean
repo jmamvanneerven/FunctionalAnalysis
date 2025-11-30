@@ -61,23 +61,13 @@ theorem norm_equiv_equivalence : Equivalence (norm_equiv (V := V)) := by
 -- def Fa.Norm.norm (n : Fa.Norm 𝕂 V) : V → ℝ := n.nacg.norm
 
 variable [RCLike 𝕂]
-variable [nacg : NormedAddCommGroup V] [ns : NormedSpace 𝕂 V]
-theorem norm_equiv_of_subsingleton [h : Subsingleton V]
-  (norm1 : V → ℝ)
-  (norm2 : V → ℝ)
-  (h1 : norm1 0 = 0)
-  (h2 : norm2 0 = 0) :
-  norm_equiv norm1 norm2 := by
-  use 1, by linarith
-  use 1, by linarith
-  intro x
-  simp [Subsingleton.elim x 0, h1, h2]
 
-
-noncomputable def euclidean_norm {ι : Type _} [Fintype ι] (b : Basis ι 𝕂 V) (v : V) : ℝ :=
+noncomputable def euclidean_norm [AddCommGroup V] [Module 𝕂 V]
+    {ι : Type _} [Fintype ι] (b : Basis ι 𝕂 V) (v : V) : ℝ :=
     Real.sqrt (∑ i, ‖b.coord i v‖ ^ 2)
 
-noncomputable def EuclideanSeminormedAddCommGroup {ι : Type _} [Fintype ι] (b : Basis ι 𝕂 V) :
+noncomputable def EuclideanSeminormedAddCommGroup [AddCommGroup V] [Module 𝕂 V]
+  {ι : Type _} [Fintype ι] (b : Basis ι 𝕂 V) :
   SeminormedAddCommGroup V where
   toNorm := ⟨euclidean_norm b⟩
   toPseudoMetricSpace := {
@@ -92,13 +82,47 @@ noncomputable def EuclideanSeminormedAddCommGroup {ι : Type _} [Fintype ι] (b 
     dist_comm x y := by
       simp [euclidean_norm]
       have : b.repr (x - y) = - b.repr (y - x) := by
-        
-        sorry
+        rw [← map_neg b.repr (y - x)]
+        congr
+        exact Eq.symm (neg_sub y x)
+      rw [this]
+      congr
+      simp
+    dist_triangle x y z := by
+      simp [euclidean_norm]
+      have : b.repr (x - z) = b.repr (x - y) +  b.repr (y - z) := by
+        simp [map_sub b.repr]
+      rw [this]
+      simp
+      have : √(∑ i, ‖(b.repr (x - y)) i + (b.repr (y - z)) i‖^2) ≤ √(∑ i, (‖(b.repr (x - y)) i‖^2 + ‖(b.repr (y - z)) i‖^2)) := by
+        apply Real.sqrt_le_sqrt
+        apply Finset.sum_le_sum
+        intro i _
+        calc
+          ‖(b.repr (x - y)) i + (b.repr (y - z)) i‖ ^ 2 ≤ (‖(b.repr (x - y)) i‖  +‖(b.repr (y - z)) i‖) ^ 2 := by
+            rw [sq_le_sq]
+            simp only [abs_norm]
+            exact le_trans (norm_add_le _ _) (le_abs_self _)
+          _ ≤ ‖(b.repr (x - y)) i‖ ^ 2 + ‖(b.repr (y - z)) i‖ ^ 2 := by
+
+            sorry
 
       sorry
-    dist_triangle := sorry
   }
   dist_eq := by simp
+
+
+variable [nacg : NormedAddCommGroup V] [ns : NormedSpace 𝕂 V]
+theorem norm_equiv_of_subsingleton [h : Subsingleton V]
+  (norm1 : V → ℝ)
+  (norm2 : V → ℝ)
+  (h1 : norm1 0 = 0)
+  (h2 : norm2 0 = 0) :
+  norm_equiv norm1 norm2 := by
+  use 1, by linarith
+  use 1, by linarith
+  intro x
+  simp [Subsingleton.elim x 0, h1, h2]
 
 theorem norm_equiv_euclidean_of_finite_dimensional
   {ι : Type _}
